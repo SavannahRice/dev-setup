@@ -1,0 +1,3 @@
+#!/usr/bin/env zsh
+echo "Setting up gcloud..."
+brew install --cask google-cloud-sdk

@@ -1,0 +1,5 @@
+#!/usr/bin/env zsh
+
+echo "Setting up typescript..."
+# Install typescript using Homebrew
+brew install typescript

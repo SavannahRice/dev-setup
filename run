@@ -1,0 +1,76 @@
+#!/usr/bin/env zsh
+# When new scripts are added to the `./runs` directory, make sure to make them executable with `chmod +x <script>`.
+
+# Determines the directory where the script is located and stores it in the variable `script_dir`.
+script_dir=$(cd "$(dirname "${ZSH_SOURCE[0]}")" && pwd)
+
+# Initializes the `filter` variable as an empty string.
+filter=""
+
+# Initializes the `dry` variable to "0", indicating that the script is not in dry-run mode by default.
+dry="0"
+
+# Loops through all the command-line arguments passed to the script.
+while [[ $# -gt 0 ]]; do
+    # Checks if the current argument is "--dry".
+    if [[  $1 == "--dry-run" ]]; then
+        # Sets `dry` to "1" to enable dry-run mode.
+        dry="1"
+    else
+        # Sets the `filter` variable to the current argument.
+        filter="$1"
+    fi
+    # Shifts the arguments to process the next one.
+    shift
+done
+
+# Defines a function to log messages.
+log() {
+    
+    # Checks if the script is in dry-run mode.
+    if [[ $dry == "1" ]]; then
+        # Logs the message with a "[DRY_RUN]" prefix.
+        echo "[DRY_RUN] $@"
+    else
+        # Logs the message as-is.
+        echo "[RUN] $@"
+    fi
+}
+
+# Defines a function to execute commands.
+execute() {
+    # Checks if the script is in dry-run mode.
+    if [[ $dry == "1" ]]; then
+        # Logs the command that would be executed.
+        log "$@"
+        # Exits the function without executing the command.
+        return
+    fi
+    # Logs the command is being executed.
+    log "$@"
+    # Executes the command passed as arguments to the function.
+    "$@"
+}
+
+# Logs the script directory and the filter value.
+log "Run:  dir $script_dir, -- filter: \"$filter\""
+
+# This script sets up the environment for the project.
+# Changes the current working directory to the script directory.
+cd $script_dir
+
+# Finds all executable files in the `./runs` directory (one level deep) and stores them in the `scripts` variable.
+scripts=$(find ./runs -maxdepth 1 -mindepth 1 -perm +111 -type f)
+
+# Loops through each script found in the `scripts` variable.
+find ./runs -maxdepth 1 -mindepth 1 -perm +111 -type f | while IFS= read -r script; do
+    # Checks if the script name does not match the filter.
+    if echo "$script" | grep -qv "$filter"; then
+        # Logs that the script is being filtered out.
+        log "filtering $script"
+        # Skips to the next script.
+        continue
+    fi
+    # Executes the script if it matches the filter.
+    execute "$script" 
+done
